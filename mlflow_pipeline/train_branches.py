@@ -12,24 +12,27 @@ from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from mlflow.tracking import MlflowClient
 
-# ---------------- MLFLOW SETUP (FIXED) ----------------
+# ---------------- SAFE PATH SETUP ----------------
+BASE_DIR = os.getcwd()
+MLRUNS_PATH = os.path.join(BASE_DIR, "mlruns")
+
 tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
 
 if tracking_uri:
     mlflow.set_tracking_uri(tracking_uri)
 else:
-    mlflow.set_tracking_uri("file:./mlruns")
+    mlflow.set_tracking_uri(f"file:{MLRUNS_PATH}")
 
-os.makedirs("./mlruns", exist_ok=True)
+os.makedirs(MLRUNS_PATH, exist_ok=True)
 
 # ---------------- CONFIG ----------------
 MODEL_NAME = "vad-model"
 EXPERIMENT_NAME = "vad-experiment"
 
-DATA_PATH = "balanced_vad_dataset.csv"
+DATA_PATH = os.path.join(BASE_DIR, "balanced_vad_dataset.csv")
 
-ACTIVE_DIR = Path("models/active")
-ARCHIVE_DIR = Path("models/archive")
+ACTIVE_DIR = Path(BASE_DIR) / "models" / "active"
+ARCHIVE_DIR = Path(BASE_DIR) / "models" / "archive"
 
 GITHUB_REPO = "Rohit-Kush-Suraj-Shivam/MLOps-VAD"
 WORKFLOW_FILE = "mlops_pipeline.yml"
@@ -45,7 +48,7 @@ X = df.drop("label", axis=1)
 y = df["label"]
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2
+    X, y, test_size=0.2, random_state=42
 )
 
 # ---------------- TRAIN MODEL ----------------
@@ -89,7 +92,7 @@ if f1 > old_f1:
 
     # archive old model
     if ACTIVE_DIR.exists():
-        arch_path = ARCHIVE_DIR / f"model_{old_f1}"
+        arch_path = ARCHIVE_DIR / f"model_{old_f1:.4f}"
         shutil.copytree(ACTIVE_DIR, arch_path, dirs_exist_ok=True)
 
     # save new model
@@ -123,9 +126,11 @@ if f1 > old_f1:
 
         data = {"ref": "main"}
 
-        response = requests.post(url, headers=headers, json=data)
-
-        print("GitHub Trigger Status:", response.status_code)
+        try:
+            response = requests.post(url, headers=headers, json=data)
+            print("GitHub Trigger Status:", response.status_code)
+        except Exception as e:
+            print("GitHub trigger failed:", str(e))
 
 else:
     print("New model NOT better → skipping deployment")
