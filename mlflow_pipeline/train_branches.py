@@ -5,16 +5,22 @@ import mlflow.sklearn
 import requests
 import joblib
 import pandas as pd
-import os
-import mlflow
-
-mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "file:/mlruns"))
 
 from pathlib import Path
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from mlflow.tracking import MlflowClient
+
+# ---------------- MLFLOW SETUP (FIXED) ----------------
+tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
+
+if tracking_uri:
+    mlflow.set_tracking_uri(tracking_uri)
+else:
+    mlflow.set_tracking_uri("file:./mlruns")
+
+os.makedirs("./mlruns", exist_ok=True)
 
 # ---------------- CONFIG ----------------
 MODEL_NAME = "vad-model"
@@ -38,7 +44,9 @@ df = pd.read_csv(DATA_PATH)
 X = df.drop("label", axis=1)
 y = df["label"]
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2
+)
 
 # ---------------- TRAIN MODEL ----------------
 model = RandomForestClassifier()
@@ -56,8 +64,8 @@ def get_production_f1():
         if versions:
             run_id = versions[0].run_id
             data = client.get_run(run_id)
-            return data.data.metrics["f1_score"]
-    except:
+            return data.data.metrics.get("f1_score", 0)
+    except Exception:
         return 0
 
 old_f1 = get_production_f1()
@@ -66,7 +74,12 @@ print(f"Old Model F1: {old_f1}")
 # ---------------- LOG TO MLFLOW ----------------
 with mlflow.start_run() as run:
     mlflow.log_metric("f1_score", f1)
-    mlflow.sklearn.log_model(model, "model")
+
+    mlflow.sklearn.log_model(
+        model,
+        "model",
+        input_example=X_train.iloc[:1]
+    )
 
     run_id = run.info.run_id
 
@@ -108,9 +121,7 @@ if f1 > old_f1:
             "Accept": "application/vnd.github.v3+json"
         }
 
-        data = {
-            "ref": "main"
-        }
+        data = {"ref": "main"}
 
         response = requests.post(url, headers=headers, json=data)
 
