@@ -111,8 +111,11 @@ jobs:
     - name: Build EXE
       run: pyinstaller vad_app.spec --clean
 
-    - name: Upload EXE
+    - name: Show dist contents (debug)
+      run: dir dist
+
+    - name: Upload EXE (FULL DIST FOLDER)
       uses: actions/upload-artifact@v4
       with:
         name: exe
-        path: dist/VAD-App.exe
+        path: dist/
