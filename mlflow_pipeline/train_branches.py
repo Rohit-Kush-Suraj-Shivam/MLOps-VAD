@@ -1,5 +1,6 @@
 import os
 import shutil
+import tempfile
 import mlflow
 import mlflow.sklearn
 import requests
@@ -12,20 +13,19 @@ from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from mlflow.tracking import MlflowClient
 
-# ---------------- SAFE PATH SETUP ----------------
-BASE_DIR = os.getcwd()
-MLRUNS_PATH = os.path.join(BASE_DIR, "mlruns")
-
+# ---------------- SAFE MLFLOW SETUP ----------------
 tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
 
 if tracking_uri:
     mlflow.set_tracking_uri(tracking_uri)
 else:
-    mlflow.set_tracking_uri(f"file:{MLRUNS_PATH}")
-
-os.makedirs(MLRUNS_PATH, exist_ok=True)
+    # ALWAYS safe in GitHub Actions
+    temp_dir = tempfile.mkdtemp()
+    mlflow.set_tracking_uri(f"file:{temp_dir}")
 
 # ---------------- CONFIG ----------------
+BASE_DIR = os.getcwd()
+
 MODEL_NAME = "vad-model"
 EXPERIMENT_NAME = "vad-experiment"
 
@@ -80,7 +80,7 @@ with mlflow.start_run() as run:
 
     mlflow.sklearn.log_model(
         model,
-        "model",
+        name="model",   # fixed deprecation warning
         input_example=X_train.iloc[:1]
     )
 
@@ -92,6 +92,7 @@ if f1 > old_f1:
 
     # archive old model
     if ACTIVE_DIR.exists():
+        ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
         arch_path = ARCHIVE_DIR / f"model_{old_f1:.4f}"
         shutil.copytree(ACTIVE_DIR, arch_path, dirs_exist_ok=True)
 
