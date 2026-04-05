@@ -5,7 +5,7 @@ services:
     container_name: mlflow-server
     command: mlflow ui --host 0.0.0.0 --port 5000
     ports:
-      - "5000:5000"
+      - "5001:5000"
     volumes:
       - mlflow_data:/mlruns
 
