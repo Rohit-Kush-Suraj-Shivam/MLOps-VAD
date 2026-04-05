@@ -1,0 +1,15 @@
+artifact_uri: file:///app/mlruns/176102662917798861/4aa3a307c7cd48faa436a44670deb369/artifacts
+end_time: 1775419997495
+entry_point_name: ''
+experiment_id: '176102662917798861'
+lifecycle_stage: active
+run_id: 4aa3a307c7cd48faa436a44670deb369
+run_name: luminous-bass-20
+run_uuid: 4aa3a307c7cd48faa436a44670deb369
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1775419995161
+status: 3
+tags: []
+user_id: root
