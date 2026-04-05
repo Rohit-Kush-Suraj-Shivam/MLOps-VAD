@@ -1,0 +1,15 @@
+artifact_uri: file:///app/mlruns/176102662917798861/5d03d8136737440fb76bba33d4ca6bef/artifacts
+end_time: 1775419613471
+entry_point_name: ''
+experiment_id: '176102662917798861'
+lifecycle_stage: active
+run_id: 5d03d8136737440fb76bba33d4ca6bef
+run_name: legendary-snake-814
+run_uuid: 5d03d8136737440fb76bba33d4ca6bef
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1775419611517
+status: 3
+tags: []
+user_id: root
