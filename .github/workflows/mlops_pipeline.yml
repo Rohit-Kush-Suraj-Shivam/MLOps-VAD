@@ -15,25 +15,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
+    - uses: actions/setup-python@v4
       with:
         python-version: "3.10"
 
-    - name: Install dependencies
-      run: pip install -r requirements.txt
+    - run: pip install -r requirements.txt
 
-    - name: Train model
-      run: python mlflow_pipeline/train_branches.py
-
-    - name: Upload model artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: model
-        path: models/
+    - run: python mlflow_pipeline/train_branches.py
 
   api-test:
     runs-on: ubuntu-latest
@@ -42,35 +32,29 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Download model
-      uses: actions/download-artifact@v4
-      with:
-        name: model
-
-    - name: Ensure model path
-      run: mkdir -p models/active
-
-    - name: Setup Python
-      uses: actions/setup-python@v4
+    - uses: actions/setup-python@v4
       with:
         python-version: "3.10"
 
-    - name: Install dependencies
-      run: pip install -r requirements.txt
+    - run: pip install -r requirements.txt
 
+    # ✅ START API ON 8080
     - name: Start API
       run: |
-        uvicorn api.main:app &
+        nohup uvicorn api.main:app --host 127.0.0.1 --port 8080 > server.log 2>&1 &
 
+    # ✅ WAIT FOR API
     - name: Wait for API
       run: |
-        for i in {1..10}; do
-          curl -s http://localhost:8000/health && break
+        for i in {1..15}; do
+          curl -s http://127.0.0.1:8080 && break
+          echo "Waiting for API..."
           sleep 2
         done
 
+    # ✅ TEST API
     - name: Test API
-      run: curl http://localhost:8000
+      run: curl http://127.0.0.1:8080
 
   docker:
     runs-on: ubuntu-latest
@@ -79,17 +63,13 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set lowercase owner
-      run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+    - run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
-    - name: Login to GHCR
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+    - run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-    - name: Build Docker image
-      run: docker build -t ghcr.io/$OWNER_LC/vad-app:latest .
+    - run: docker build -t ghcr.io/$OWNER_LC/vad-app:latest .
 
-    - name: Push Docker image
-      run: docker push ghcr.io/$OWNER_LC/vad-app:latest
+    - run: docker push ghcr.io/$OWNER_LC/vad-app:latest
 
   build-exe:
     runs-on: windows-latest
@@ -98,28 +78,17 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
+    - uses: actions/setup-python@v4
       with:
         python-version: "3.10"
 
-    - name: Install dependencies
-      run: pip install -r requirements.txt
+    - run: pip install -r requirements.txt
 
-    - name: Install PyInstaller
-      run: pip install pyinstaller
+    - run: pip install pyinstaller
 
-    - name: Build EXE
-      run: pyinstaller vad_app.spec --clean
+    - run: pyinstaller vad_app.spec --clean
 
-    - name: Show dist contents (debug)
-      run: dir dist
-
-    - name: Upload EXE (FULL DIST FOLDER)
-      uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v4
       with:
         name: exe
         path: dist/
-  
-      
-        
