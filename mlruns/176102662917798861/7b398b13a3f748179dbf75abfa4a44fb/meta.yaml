@@ -1,0 +1,15 @@
+artifact_uri: file:///app/mlruns/176102662917798861/7b398b13a3f748179dbf75abfa4a44fb/artifacts
+end_time: 1775420253805
+entry_point_name: ''
+experiment_id: '176102662917798861'
+lifecycle_stage: active
+run_id: 7b398b13a3f748179dbf75abfa4a44fb
+run_name: intelligent-crab-791
+run_uuid: 7b398b13a3f748179dbf75abfa4a44fb
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1775420251541
+status: 3
+tags: []
+user_id: root

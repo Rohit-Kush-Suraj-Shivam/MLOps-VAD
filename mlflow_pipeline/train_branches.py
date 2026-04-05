@@ -5,6 +5,10 @@ import mlflow.sklearn
 import requests
 import joblib
 import pandas as pd
+import os
+import mlflow
+
+mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "file:/mlruns"))
 
 from pathlib import Path
 from sklearn.ensemble import RandomForestClassifier
