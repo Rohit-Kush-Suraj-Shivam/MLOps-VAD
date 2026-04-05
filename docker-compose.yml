@@ -1,0 +1,62 @@
+version: "3.9"
+
+services:
+
+  # ── FastAPI inference server ──────────────────────────────────────────
+  vad-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vad_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models          # shared model store
+      - ./mlflow.db:/app/mlflow.db    # shared MLflow DB
+    environment:
+      MODEL_POLL_SEC: "30"            # reload check every 30 s in compose
+    restart: unless-stopped
+    depends_on:
+      - mlflow-ui
+
+  # ── MLflow tracking UI ────────────────────────────────────────────────
+  mlflow-ui:
+    image: ghcr.io/mlflow/mlflow:v2.16.2
+    container_name: mlflow_ui
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow.db:/mlflow/mlflow.db
+      - ./mlruns:/mlflow/mlruns
+    command: >
+      mlflow server
+        --backend-store-uri sqlite:////mlflow/mlflow.db
+        --default-artifact-root /mlflow/mlruns
+        --host 0.0.0.0
+        --port 5000
+    restart: unless-stopped
+
+  # ── Scheduled retrainer (runs pipeline every N hours) ─────────────────
+  vad-trainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vad_trainer
+    volumes:
+      - ./models:/app/models
+      - ./mlflow.db:/app/mlflow.db
+      - ./balanced_vad_dataset.csv:/app/balanced_vad_dataset.csv
+    environment:
+      RETRAIN_EVERY_HOURS: "6"
+    entrypoint: >
+      sh -c "
+        while true; do
+          echo '[Trainer] Starting pipeline...';
+          python -m mlflow_pipeline.train_branches;
+          echo '[Trainer] Done. Sleeping $${RETRAIN_EVERY_HOURS}h...';
+          sleep $$(( RETRAIN_EVERY_HOURS * 3600 ));
+        done
+      "
+    restart: unless-stopped
+    depends_on:
+      - mlflow-ui

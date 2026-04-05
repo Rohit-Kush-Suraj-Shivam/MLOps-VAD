@@ -1,0 +1,40 @@
+{
+  "feature_set": "zcr_others",
+  "feature_names": [
+    "energy",
+    "zcr",
+    "spectral_centroid"
+  ],
+  "model_type": "SVC",
+  "metrics": {
+    "accuracy": 0.6633165829145728,
+    "precision": 0.6285714285714286,
+    "recall": 0.8543689320388349,
+    "f1": 0.7242798353909465,
+    "roc_auc": 0.7366252022653722
+  },
+  "cv_f1_mean": 0.7480729395163462,
+  "cv_f1_std": 0.016152961726087513,
+  "confusion_matrix": {
+    "confusion_matrix": [
+      [
+        88,
+        104
+      ],
+      [
+        30,
+        176
+      ]
+    ],
+    "true_negatives": 88,
+    "false_positives": 104,
+    "false_negatives": 30,
+    "true_positives": 176
+  },
+  "train_samples": 1592,
+  "test_samples": 398,
+  "timestamp": "2026-04-05T22:09:52.383672",
+  "mlflow_run_id": "d2fc1d8d7d244041b76ea0eab36160cc",
+  "mlflow_experiment": "VAD-zcr_others",
+  "active_branch": "zcr_others"
+}

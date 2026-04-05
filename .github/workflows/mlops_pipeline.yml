@@ -1,0 +1,205 @@
+name: VAD MLOps Pipeline
+
+on:
+  push:
+    branches: [main, combined, mfcc_only, zcr_others]
+    paths:
+      - "**.py"
+      - "**.csv"
+      - "requirements*.txt"
+  schedule:
+    - cron: "0 2 * * *"       # nightly retrain at 02:00 UTC
+  workflow_dispatch:           # manual trigger from GitHub UI
+    inputs:
+      force_retrain:
+        description: "Force retrain even if no changes"
+        required: false
+        default: "false"
+
+jobs:
+  # ── 1. Train all branches & select best model ──────────────────────────
+  train:
+    name: Train & Evaluate (3 branches)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install system deps (libsndfile, ffmpeg)
+        run: sudo apt-get install -y libsndfile1 ffmpeg
+
+      - name: Install Python deps
+        run: pip install -r requirements.docker.txt
+
+      - name: Run MLflow training pipeline
+        run: python mlflow_pipeline/train_branches.py
+
+      - name: Show active model meta
+        run: cat models/active/meta.json | python -m json.tool
+
+      - name: Upload model artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-models
+          path: |
+            models/
+            model.pkl
+            scaler.pkl
+            mlflow.db
+
+  # ── 2. Smoke-test the API ──────────────────────────────────────────────
+  test-api:
+    name: API Smoke Test
+    needs: train
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: |
+          sudo apt-get install -y libsndfile1 ffmpeg
+          pip install -r requirements.docker.txt
+
+      - name: Download trained models
+        uses: actions/download-artifact@v4
+        with:
+          name: trained-models
+
+      - name: Start API server
+        run: |
+          uvicorn api.main:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+
+      - name: Health check
+        run: |
+          curl -f http://localhost:8000/health
+          curl -f http://localhost:8000/model/info | python -m json.tool
+
+      - name: Upload test audio and check response
+        run: |
+          RESULT=$(curl -s -X POST http://localhost:8000/detect/file \
+            -F "file=@test.wav" \
+            -H "accept: application/json")
+          echo "API Response: $RESULT"
+          # Verify response has required fields
+          echo $RESULT | python -c "
+          import sys, json
+          r = json.load(sys.stdin)
+          assert 'prediction' in r, 'Missing prediction'
+          assert 'speech_probability' in r, 'Missing probability'
+          assert r['prediction'] in ('Speech','Noise'), 'Bad prediction value'
+          print('✅ API smoke test passed')
+          "
+
+  # ── 3. Build Docker image ──────────────────────────────────────────────
+  build-docker:
+    name: Build & Push Docker Image
+    needs: test-api
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download trained models
+        uses: actions/download-artifact@v4
+        with:
+          name: trained-models
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/vad-app:latest
+            ghcr.io/${{ github.repository_owner }}/vad-app:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── 4. Build Windows .exe & create GitHub Release ─────────────────────
+  build-exe:
+    name: Build Windows .exe
+    needs: test-api
+    runs-on: windows-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download trained models
+        uses: actions/download-artifact@v4
+        with:
+          name: trained-models
+
+      - name: Install deps + PyInstaller
+        run: |
+          pip install -r requirements.docker.txt
+          pip install pyinstaller
+
+      - name: Build .exe
+        run: pyinstaller vad_app.spec
+
+      - name: Verify build
+        run: |
+          ls dist/
+          echo "EXE size: $(du -sh dist/VAD-App.exe)"
+
+      - name: Get version tag
+        id: version
+        run: echo "tag=v$(date +'%Y.%m.%d')-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "VAD App ${{ steps.version.outputs.tag }}"
+          body: |
+            ## VAD — Voice Activity Detection
+
+            ### Download
+            - **Windows**: Download `VAD-App.exe` below, double-click to run.
+
+            ### What's inside
+            - FastAPI inference server (auto-starts)
+            - Best model auto-selected from 3 branches (this build: see model info)
+            - Opens Swagger UI in your browser at http://localhost:8765/docs
+
+            ### Active model metrics
+            ${{ steps.version.outputs.tag }}
+          files: dist/VAD-App.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

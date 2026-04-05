@@ -1,69 +1,132 @@
-from fastapi import FastAPI
+"""
+VAD FastAPI — with MLflow-backed auto model reload.
+The active model is determined by models/active/meta.json.
+A background scheduler checks for updates every 60 s (configurable).
+"""
+
+import os, json, time, threading, io
+from pathlib import Path
+
 import joblib
 import numpy as np
-import sounddevice as sd
-from .combined import extract_features
+from fastapi import FastAPI, UploadFile, File, HTTPException
 
-app = FastAPI(title="Live VAD API")
+# ── Paths ──────────────────────────────────────────────────────────────────
+ROOT       = Path(__file__).resolve().parent.parent
+ACTIVE_DIR = ROOT / "models" / "active"
+META_PATH  = ACTIVE_DIR / "meta.json"
 
-# Load trained model and scaler
-model = joblib.load("model.pkl")
-scaler = joblib.load("scaler.pkl")
+try:
+    import librosa
+    LIBROSA_AVAILABLE = True
+except ImportError:
+    LIBROSA_AVAILABLE = False
 
-SAMPLE_RATE = 22050
-DURATION = 3.0          # record 3 seconds
-THRESHOLD = 0.15         # speech probability threshold
-SILENCE_ENERGY = 0.0003 # sfilterilence 
+def extract_features(audio: np.ndarray, sr: int, feature_names: list) -> np.ndarray:
+    feats = {}
+    if LIBROSA_AVAILABLE:
+        mfcc = librosa.feature.mfcc(y=audio.astype(float), sr=sr, n_mfcc=13)
+        for i, m in enumerate(np.mean(mfcc, axis=1)):
+            feats[f"mfcc_{i+1}"] = m
+        feats["energy"] = float(np.mean(librosa.feature.rms(y=audio)))
+        feats["zcr"]    = float(np.mean(librosa.feature.zero_crossing_rate(audio)))
+        feats["spectral_centroid"] = float(
+            np.mean(librosa.feature.spectral_centroid(y=audio.astype(float), sr=sr)))
+    return np.array([feats[n] for n in feature_names]).reshape(1, -1)
 
 
-from scipy.signal import butter, filtfilt
+class ModelManager:
+    def __init__(self):
+        self._lock     = threading.Lock()
+        self.model     = None
+        self.scaler    = None
+        self.meta      = {}
+        self._last_ts  = None
+        self._poll_sec = int(os.getenv("MODEL_POLL_SEC", "60"))
+        self._load()
+        self._start_watcher()
 
-def highpass_filter(data, cutoff=100, fs=22050, order=5):
-    nyquist = 0.5 * fs
-    normal_cutoff = cutoff / nyquist
-    b, a = butter(order, normal_cutoff, btype='high', analog=False)
-    return filtfilt(b, a, data)
+    def _load(self):
+        try:
+            model_path  = ACTIVE_DIR / "model.pkl"
+            scaler_path = ACTIVE_DIR / "scaler.pkl"
+            if not model_path.exists():
+                model_path  = ROOT / "model.pkl"
+                scaler_path = ROOT / "scaler.pkl"
+            mtime = model_path.stat().st_mtime
+            if mtime == self._last_ts:
+                return
+            model  = joblib.load(model_path)
+            scaler = joblib.load(scaler_path) if scaler_path.exists() else None
+            meta   = json.loads(META_PATH.read_text()) if META_PATH.exists() else {}
+            with self._lock:
+                self.model = model; self.scaler = scaler
+                self.meta  = meta;  self._last_ts = mtime
+            print(f"[ModelManager] Loaded: branch={meta.get('active_branch','?')} "
+                  f"F1={meta.get('metrics',{}).get('f1','?')}")
+        except Exception as e:
+            print(f"[ModelManager] ERROR: {e}")
+
+    def _start_watcher(self):
+        def _w():
+            while True:
+                time.sleep(self._poll_sec)
+                self._load()
+        threading.Thread(target=_w, daemon=True).start()
+
+    @property
+    def feature_names(self):
+        return self.meta.get("feature_names",
+               [f"mfcc_{i}" for i in range(1,14)] + ["energy","zcr","spectral_centroid"])
+
+    def predict(self, audio, sr):
+        with self._lock:
+            if self.model is None:
+                raise RuntimeError("Model not loaded")
+            feats = extract_features(audio, sr, self.feature_names)
+            if self.scaler is not None:
+                feats = self.scaler.transform(feats)
+            prob = self.model.predict_proba(feats)[0][1]
+        pred = "Speech" if prob >= 0.5 else "Noise"
+        return {"prediction": pred, "speech_probability": round(float(prob), 4)}
 
 
-@app.get("/detect")
-def detect():
+manager = ModelManager()
+app = FastAPI(title="VAD API - MLOps Edition", version="2.0.0")
 
-    audio = sd.rec(int(DURATION * SAMPLE_RATE),
-                   samplerate=SAMPLE_RATE,
-                   channels=1)
-    sd.wait()
+@app.get("/")
+def root():
+    m = manager.meta
+    return {"status": "ok", "active_branch": m.get("active_branch"),
+            "model_type": m.get("model_type"), "metrics": m.get("metrics"),
+            "last_updated": m.get("selection_timestamp")}
 
-    audio = audio.flatten()
+@app.get("/model/info")
+def model_info():
+    return manager.meta
 
-    # Normalize
-    audio = audio / (np.max(np.abs(audio)) + 1e-6)
+@app.post("/detect/file")
+async def detect_file(file: UploadFile = File(...)):
+    if not LIBROSA_AVAILABLE:
+        raise HTTPException(503, "librosa not installed")
+    import librosa as _lb
+    data = await file.read()
+    try:
+        audio, sr = _lb.load(io.BytesIO(data), sr=None, mono=True)
+    except Exception as e:
+        raise HTTPException(400, f"Could not decode audio: {e}")
+    result = manager.predict(audio, sr)
+    return {**result, "energy": round(float(np.mean(audio**2)),6),
+            "variation": round(float(np.std(audio)),6),
+            "sample_rate": sr, "duration_sec": round(len(audio)/sr,2)}
 
-    # Apply high-pass filter (removes hum / low noise)
-    audio = highpass_filter(audio, cutoff=100)
+@app.get("/model/reload")
+def force_reload():
+    manager._last_ts = None
+    manager._load()
+    return {"status": "reloaded", "branch": manager.meta.get("active_branch")}
 
-    energy = np.mean(audio ** 2)
-    variation = np.std(audio)
-
-    print("Energy:", energy)
-    print("Variation:", variation)
-
-    # ML probability (monitor only)
-    features = extract_features(audio, SAMPLE_RATE)
-    features = scaler.transform(features)
-    prob = model.predict_proba(features)[0][1]
-
-    print("Speech Probability:", prob)
-
-    VARIATION_THRESHOLD = 0.14
-
-    if variation > VARIATION_THRESHOLD:
-        result = "Speech"
-    else:
-        result = "Noise"
-
-    return {
-        "Prediction": result,
-        "Speech_Probability": round(float(prob), 3),
-        "Energy": round(float(energy), 6),
-        "Variation": round(float(variation), 6)
-    }
+@app.get("/health")
+def health():
+    return {"healthy": manager.model is not None,
+            "branch": manager.meta.get("active_branch")}

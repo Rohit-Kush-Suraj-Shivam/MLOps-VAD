@@ -20,14 +20,14 @@
   ],
   "model_type": "SVC",
   "metrics": {
-    "accuracy": 0.8994974874371859,
-    "precision": 0.8807339449541285,
-    "recall": 0.9320388349514563,
-    "f1": 0.9056603773584906,
-    "roc_auc": 0.9557797330097086
+    "accuracy": 0.8919597989949749,
+    "precision": 0.8790697674418605,
+    "recall": 0.9174757281553398,
+    "f1": 0.8978622327790974,
+    "roc_auc": 0.9564876618122977
   },
-  "cv_f1_mean": 0.9043361183854481,
-  "cv_f1_std": 0.011734758425859278,
+  "cv_f1_mean": 0.8969998600496553,
+  "cv_f1_std": 0.022869264583612436,
   "confusion_matrix": {
     "confusion_matrix": [
       [
@@ -35,31 +35,31 @@
         26
       ],
       [
-        14,
-        192
+        17,
+        189
       ]
     ],
     "true_negatives": 166,
     "false_positives": 26,
-    "false_negatives": 14,
-    "true_positives": 192
+    "false_negatives": 17,
+    "true_positives": 189
   },
-  "train_samples": 1592,
+  "train_samples": 1273,
   "test_samples": 398,
-  "timestamp": "2026-04-05T22:09:53.196948",
-  "mlflow_run_id": "53e9cdf4f7e1432bb4d78e78248ddcfa",
+  "timestamp": "2026-04-05T15:49:23.290341",
+  "mlflow_run_id": "c2d281e486a842b09e7012412f7fe03b",
   "mlflow_experiment": "VAD-combined",
   "active_branch": "combined",
-  "archive_location": "models\\archive\\model_20260405_220953",
-  "selection_timestamp": "2026-04-05T22:09:53.202696",
+  "selection_timestamp": "2026-04-05T15:51:04.559143",
+  "archive_location": "models/archive/model_20260405_155104",
   "all_results": [
     {
       "rank": 1,
       "branch": "combined",
-      "f1": 0.9056603773584906,
+      "f1": 0.8978622327790974,
       "model_type": "SVC",
-      "accuracy": 0.8994974874371859,
-      "roc_auc": 0.9557797330097086
+      "accuracy": 0.8919597989949749,
+      "roc_auc": 0.9564876618122977
     },
     {
       "rank": 2,
@@ -67,19 +67,19 @@
       "f1": 0.8978622327790974,
       "model_type": "SVC",
       "accuracy": 0.8919597989949749,
-      "roc_auc": 0.9519366909385114
+      "roc_auc": 0.9519114077669903
     },
     {
       "rank": 3,
       "branch": "zcr_others",
-      "f1": 0.7242798353909465,
+      "f1": 0.721868365180467,
       "model_type": "SVC",
-      "accuracy": 0.6633165829145728,
-      "roc_auc": 0.7366252022653722
+      "accuracy": 0.6708542713567839,
+      "roc_auc": 0.7368021844660193
     }
   ],
   "comparison_report": {
-    "timestamp": "2026-04-05T22:09:53.202696",
+    "timestamp": "2026-04-05T15:51:04.559129",
     "total_models_evaluated": 3,
     "models": [
       {
@@ -88,11 +88,11 @@
         "model_type": "SVC",
         "feature_set": "combined",
         "metrics": {
-          "accuracy": 0.8994974874371859,
-          "precision": 0.8807339449541285,
-          "recall": 0.9320388349514563,
-          "f1": 0.9056603773584906,
-          "roc_auc": 0.9557797330097086
+          "f1": 0.8978622327790974,
+          "accuracy": 0.8919597989949749,
+          "precision": 0.8790697674418605,
+          "recall": 0.9174757281553398,
+          "roc_auc": 0.9564876618122977
         },
         "feature_names": [
           "mfcc_1",
@@ -119,11 +119,11 @@
         "model_type": "SVC",
         "feature_set": "mfcc_only",
         "metrics": {
+          "f1": 0.8978622327790974,
           "accuracy": 0.8919597989949749,
           "precision": 0.8790697674418605,
           "recall": 0.9174757281553398,
-          "f1": 0.8978622327790974,
-          "roc_auc": 0.9519366909385114
+          "roc_auc": 0.9519114077669903
         },
         "feature_names": [
           "mfcc_1",
@@ -147,11 +147,11 @@
         "model_type": "SVC",
         "feature_set": "zcr_others",
         "metrics": {
-          "accuracy": 0.6633165829145728,
-          "precision": 0.6285714285714286,
-          "recall": 0.8543689320388349,
-          "f1": 0.7242798353909465,
-          "roc_auc": 0.7366252022653722
+          "f1": 0.721868365180467,
+          "accuracy": 0.6708542713567839,
+          "precision": 0.6415094339622641,
+          "recall": 0.8252427184466019,
+          "roc_auc": 0.7368021844660193
         },
         "feature_names": [
           "energy",

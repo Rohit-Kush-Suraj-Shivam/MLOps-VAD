@@ -1,0 +1,50 @@
+{
+  "feature_set": "mfcc_only",
+  "feature_names": [
+    "mfcc_1",
+    "mfcc_2",
+    "mfcc_3",
+    "mfcc_4",
+    "mfcc_5",
+    "mfcc_6",
+    "mfcc_7",
+    "mfcc_8",
+    "mfcc_9",
+    "mfcc_10",
+    "mfcc_11",
+    "mfcc_12",
+    "mfcc_13"
+  ],
+  "model_type": "SVC",
+  "metrics": {
+    "accuracy": 0.8919597989949749,
+    "precision": 0.8790697674418605,
+    "recall": 0.9174757281553398,
+    "f1": 0.8978622327790974,
+    "roc_auc": 0.9519366909385114
+  },
+  "cv_f1_mean": 0.8992307430845358,
+  "cv_f1_std": 0.011691472709745744,
+  "confusion_matrix": {
+    "confusion_matrix": [
+      [
+        166,
+        26
+      ],
+      [
+        17,
+        189
+      ]
+    ],
+    "true_negatives": 166,
+    "false_positives": 26,
+    "false_negatives": 17,
+    "true_positives": 189
+  },
+  "train_samples": 1592,
+  "test_samples": 398,
+  "timestamp": "2026-04-05T22:09:51.419762",
+  "mlflow_run_id": "626cf43686574bbebda6c914eee268cb",
+  "mlflow_experiment": "VAD-mfcc_only",
+  "active_branch": "mfcc_only"
+}
