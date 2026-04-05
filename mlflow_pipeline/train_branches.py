@@ -1,6 +1,7 @@
 import os
 import shutil
 import tempfile
+import time
 import mlflow
 import mlflow.sklearn
 import requests
@@ -13,13 +14,21 @@ from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from mlflow.tracking import MlflowClient
 
-# ---------------- SAFE MLFLOW SETUP ----------------
+# ---------------- WAIT FOR MLFLOW SERVER ----------------
 tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
 
 if tracking_uri:
     mlflow.set_tracking_uri(tracking_uri)
+
+    # wait for mlflow server
+    for _ in range(10):
+        try:
+            mlflow.set_experiment("temp_check")
+            break
+        except Exception:
+            print("Waiting for MLflow server...")
+            time.sleep(2)
 else:
-    # ALWAYS safe in GitHub Actions
     temp_dir = tempfile.mkdtemp()
     mlflow.set_tracking_uri(f"file:{temp_dir}")
 
@@ -80,27 +89,25 @@ with mlflow.start_run() as run:
 
     mlflow.sklearn.log_model(
         model,
-        name="model",   # fixed deprecation warning
+        name="model",
         input_example=X_train.iloc[:1]
     )
 
     run_id = run.info.run_id
 
+print("Logged to MLflow!")
+
 # ---------------- COMPARE MODELS ----------------
 if f1 > old_f1:
     print("New model is better → promoting...")
 
-    # archive old model
     if ACTIVE_DIR.exists():
         ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
-        arch_path = ARCHIVE_DIR / f"model_{old_f1:.4f}"
-        shutil.copytree(ACTIVE_DIR, arch_path, dirs_exist_ok=True)
+        shutil.copytree(ACTIVE_DIR, ARCHIVE_DIR / f"model_{old_f1:.4f}", dirs_exist_ok=True)
 
-    # save new model
     ACTIVE_DIR.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, ACTIVE_DIR / "model.pkl")
 
-    # register model in MLflow
     result = mlflow.register_model(
         f"runs:/{run_id}/model",
         MODEL_NAME
@@ -112,26 +119,18 @@ if f1 > old_f1:
         stage="Production"
     )
 
-    print("Model promoted to Production!")
+    print("Model promoted!")
 
-    # ---------------- TRIGGER GITHUB WORKFLOW ----------------
     if GITHUB_TOKEN:
-        print("Triggering GitHub workflow...")
-
-        url = f"https://api.github.com/repos/{GITHUB_REPO}/actions/workflows/{WORKFLOW_FILE}/dispatches"
-
-        headers = {
-            "Authorization": f"token {GITHUB_TOKEN}",
-            "Accept": "application/vnd.github.v3+json"
-        }
-
-        data = {"ref": "main"}
-
         try:
-            response = requests.post(url, headers=headers, json=data)
-            print("GitHub Trigger Status:", response.status_code)
+            requests.post(
+                f"https://api.github.com/repos/{GITHUB_REPO}/actions/workflows/{WORKFLOW_FILE}/dispatches",
+                headers={"Authorization": f"token {GITHUB_TOKEN}"},
+                json={"ref": "main"}
+            )
+            print("Triggered GitHub workflow")
         except Exception as e:
-            print("GitHub trigger failed:", str(e))
+            print("GitHub trigger failed:", e)
 
 else:
     print("New model NOT better → skipping deployment")
