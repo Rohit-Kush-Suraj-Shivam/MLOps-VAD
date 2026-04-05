@@ -1,0 +1,15 @@
+artifact_uri: file:///app/mlruns/176102662917798861/1e09a467d59d46c4937ee731d148d496/artifacts
+end_time: 1775419869670
+entry_point_name: ''
+experiment_id: '176102662917798861'
+lifecycle_stage: active
+run_id: 1e09a467d59d46c4937ee731d148d496
+run_name: sassy-carp-154
+run_uuid: 1e09a467d59d46c4937ee731d148d496
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1775419867753
+status: 3
+tags: []
+user_id: root
