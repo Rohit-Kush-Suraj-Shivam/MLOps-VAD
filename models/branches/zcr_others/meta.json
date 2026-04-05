@@ -33,8 +33,8 @@
   },
   "train_samples": 1592,
   "test_samples": 398,
-  "timestamp": "2026-04-05T17:18:04.758300",
-  "mlflow_run_id": "fe7f82b42a0845c5974ace463b25967b",
+  "timestamp": "2026-04-05T19:41:37.262584",
+  "mlflow_run_id": "db94f1a2b755446a8157a35f029843a6",
   "mlflow_experiment": "VAD-zcr_others",
   "active_branch": "zcr_others"
 }

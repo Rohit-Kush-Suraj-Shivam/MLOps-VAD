@@ -1,0 +1,6 @@
+artifact_location: file:///app/mlruns/176102662917798861
+creation_time: 1775418641032
+experiment_id: '176102662917798861'
+last_update_time: 1775418641032
+lifecycle_stage: active
+name: vad-experiment

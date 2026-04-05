@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1775418901026
+current_stage: Production
+description: null
+last_updated_timestamp: 1775418901114
+name: vad-model
+run_id: bd357c038a764e488e4053144a5ea90c
+run_link: null
+source: file:///app/mlruns/176102662917798861/bd357c038a764e488e4053144a5ea90c/artifacts/model
+status: READY
+status_message: null
+storage_location: file:///app/mlruns/176102662917798861/bd357c038a764e488e4053144a5ea90c/artifacts/model
+user_id: null
+version: 3

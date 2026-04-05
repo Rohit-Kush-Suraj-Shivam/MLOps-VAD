@@ -1,0 +1,15 @@
+artifact_uri: file:///app/mlruns/176102662917798861/bd357c038a764e488e4053144a5ea90c/artifacts
+end_time: 1775418900837
+entry_point_name: ''
+experiment_id: '176102662917798861'
+lifecycle_stage: active
+run_id: bd357c038a764e488e4053144a5ea90c
+run_name: salty-hog-680
+run_uuid: bd357c038a764e488e4053144a5ea90c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1775418898938
+status: 3
+tags: []
+user_id: root
