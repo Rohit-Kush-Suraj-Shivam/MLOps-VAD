@@ -39,6 +39,9 @@ jobs:
       - name: Install Python deps
         run: pip install -r requirements.docker.txt
 
+      - name: Clean stale MLflow database
+        run: rm -f mlflow.db
+
       - name: Run MLflow training pipeline
         run: python mlflow_pipeline/train_branches.py
 
@@ -131,14 +134,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set lowercase owner
+        id: owner
+        run: echo "name=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/vad-app:latest
-            ghcr.io/${{ github.repository_owner }}/vad-app:${{ github.sha }}
+            ghcr.io/${{ steps.owner.outputs.name }}/vad-app:latest
+            ghcr.io/${{ steps.owner.outputs.name }}/vad-app:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
