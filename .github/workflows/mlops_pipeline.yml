@@ -29,7 +29,7 @@ jobs:
       run: python mlflow_pipeline/train_branches.py
 
     - name: Upload model artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: model
         path: models/
@@ -42,7 +42,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Download model
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: model
 
@@ -60,7 +60,7 @@ jobs:
     - name: Start API
       run: |
         uvicorn api.main:app &
-    
+
     - name: Wait for API
       run: |
         for i in {1..10}; do
@@ -109,7 +109,7 @@ jobs:
       run: pyinstaller vad_app.spec --clean
 
     - name: Upload EXE
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: exe
         path: dist/VAD-App.exe
