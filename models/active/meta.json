@@ -1,6 +1,5 @@
 {
   "feature_set": "combined",
-  "model_type": "SVC",
   "feature_names": [
     "mfcc_1",
     "mfcc_2",
@@ -19,40 +18,147 @@
     "zcr",
     "spectral_centroid"
   ],
-  "n_features": 16,
+  "model_type": "SVC",
   "metrics": {
-    "accuracy": 0.8994974874371859,
-    "precision": 0.8807339449541285,
-    "recall": 0.9320388349514563,
-    "f1": 0.9056603773584906,
-    "roc_auc": 0.9557797330097086,
-    "cv_f1_mean": 0.8958824609843589,
-    "cv_f1_std": 0.012282783885813591,
-    "tn": 166,
-    "fp": 26,
-    "fn": 14,
-    "tp": 192
+    "accuracy": 0.8919597989949749,
+    "precision": 0.8790697674418605,
+    "recall": 0.9174757281553398,
+    "f1": 0.8978622327790974,
+    "roc_auc": 0.9564876618122977
   },
-  "run_id": "7f1d95232ee545aaa95a2f89d5629de2",
+  "cv_f1_mean": 0.8969998600496553,
+  "cv_f1_std": 0.022869264583612436,
+  "confusion_matrix": {
+    "confusion_matrix": [
+      [
+        166,
+        26
+      ],
+      [
+        17,
+        189
+      ]
+    ],
+    "true_negatives": 166,
+    "false_positives": 26,
+    "false_negatives": 17,
+    "true_positives": 189
+  },
+  "train_samples": 1273,
+  "test_samples": 398,
+  "timestamp": "2026-04-05T15:35:28.704047",
+  "mlflow_run_id": "710774e8a5d24420afa99a3efcd0b4bb",
+  "mlflow_experiment": "VAD-combined",
   "active_branch": "combined",
+  "selection_timestamp": "2026-04-05T15:37:12.548032",
+  "archive_location": "models/archive/model_20260405_153712",
   "all_results": [
     {
+      "rank": 1,
       "branch": "combined",
-      "f1": 0.9056603773584906,
+      "f1": 0.8978622327790974,
       "model_type": "SVC",
-      "accuracy": 0.8994974874371859
+      "accuracy": 0.8919597989949749,
+      "roc_auc": 0.9564876618122977
     },
     {
+      "rank": 2,
       "branch": "mfcc_only",
       "f1": 0.8978622327790974,
       "model_type": "SVC",
-      "accuracy": 0.8919597989949749
+      "accuracy": 0.8919597989949749,
+      "roc_auc": 0.9519114077669903
     },
     {
+      "rank": 3,
       "branch": "zcr_others",
-      "f1": 0.7243460764587525,
-      "model_type": "LogisticRegression",
-      "accuracy": 0.6557788944723618
+      "f1": 0.721868365180467,
+      "model_type": "SVC",
+      "accuracy": 0.6708542713567839,
+      "roc_auc": 0.7368021844660193
     }
-  ]
+  ],
+  "comparison_report": {
+    "timestamp": "2026-04-05T15:37:12.548016",
+    "total_models_evaluated": 3,
+    "models": [
+      {
+        "rank": 1,
+        "branch": "combined",
+        "model_type": "SVC",
+        "feature_set": "combined",
+        "metrics": {
+          "f1": 0.8978622327790974,
+          "accuracy": 0.8919597989949749,
+          "precision": 0.8790697674418605,
+          "recall": 0.9174757281553398,
+          "roc_auc": 0.9564876618122977
+        },
+        "feature_names": [
+          "mfcc_1",
+          "mfcc_2",
+          "mfcc_3",
+          "mfcc_4",
+          "mfcc_5",
+          "mfcc_6",
+          "mfcc_7",
+          "mfcc_8",
+          "mfcc_9",
+          "mfcc_10",
+          "mfcc_11",
+          "mfcc_12",
+          "mfcc_13",
+          "energy",
+          "zcr",
+          "spectral_centroid"
+        ]
+      },
+      {
+        "rank": 2,
+        "branch": "mfcc_only",
+        "model_type": "SVC",
+        "feature_set": "mfcc_only",
+        "metrics": {
+          "f1": 0.8978622327790974,
+          "accuracy": 0.8919597989949749,
+          "precision": 0.8790697674418605,
+          "recall": 0.9174757281553398,
+          "roc_auc": 0.9519114077669903
+        },
+        "feature_names": [
+          "mfcc_1",
+          "mfcc_2",
+          "mfcc_3",
+          "mfcc_4",
+          "mfcc_5",
+          "mfcc_6",
+          "mfcc_7",
+          "mfcc_8",
+          "mfcc_9",
+          "mfcc_10",
+          "mfcc_11",
+          "mfcc_12",
+          "mfcc_13"
+        ]
+      },
+      {
+        "rank": 3,
+        "branch": "zcr_others",
+        "model_type": "SVC",
+        "feature_set": "zcr_others",
+        "metrics": {
+          "f1": 0.721868365180467,
+          "accuracy": 0.6708542713567839,
+          "precision": 0.6415094339622641,
+          "recall": 0.8252427184466019,
+          "roc_auc": 0.7368021844660193
+        },
+        "feature_names": [
+          "energy",
+          "zcr",
+          "spectral_centroid"
+        ]
+      }
+    ]
+  }
 }
