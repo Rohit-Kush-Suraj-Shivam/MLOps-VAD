@@ -1,13 +1,14 @@
-version: "3.9"
-
 services:
 
   trainer:
     build: .
     container_name: vad-trainer
-    command: sh -c "while true; do python mlflow_pipeline/train_branches.py; echo 'Retraining in 60s...'; sleep 60; done"
+    command: sh -c "while true; do python mlflow_pipeline/train_branches.py; echo 'Retraining...'; sleep 60; done"
     volumes:
       - .:/app
+      - mlflow_data:/mlruns
+    env_file:
+      - .env
 
   api:
     build: .
@@ -19,3 +20,7 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+      - mlflow_data:/mlruns
+
+volumes:
+  mlflow_data:
