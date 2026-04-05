@@ -1,0 +1,15 @@
+artifact_uri: file:///app/mlruns/176102662917798861/c824f32bc1af43e4946a5dee48e53b93/artifacts
+end_time: 1775419029804
+entry_point_name: ''
+experiment_id: '176102662917798861'
+lifecycle_stage: active
+run_id: c824f32bc1af43e4946a5dee48e53b93
+run_name: skillful-penguin-380
+run_uuid: c824f32bc1af43e4946a5dee48e53b93
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1775419027728
+status: 3
+tags: []
+user_id: root
