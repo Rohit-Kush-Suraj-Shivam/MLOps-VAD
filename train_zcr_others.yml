@@ -1,0 +1,82 @@
+name: Train – ZCR Others
+
+on:
+  push:
+    branches: ["feature/zcr-others"]
+  workflow_dispatch:
+    inputs:
+      dataset_path:
+        description: 'Path to dataset CSV'
+        required: false
+        default: 'balanced_vad_dataset.csv'
+
+env:
+  PYTHON_VERSION: "3.11"
+  MODEL_OUT_DIR: models
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure MLflow
+        run: |
+          mkdir -p /tmp/mlflow
+          URI="${MLFLOW_TRACKING_URI_SECRET:-file:///tmp/mlflow}"
+          echo "MLFLOW_URI=$URI" >> $GITHUB_ENV
+          echo "Using MLflow URI: $URI"
+        env:
+          MLFLOW_TRACKING_URI_SECRET: ${{ secrets.MLFLOW_TRACKING_URI }}
+
+      - name: Train ZCR Others Model
+        env:
+          FEATURE_SET: zcr_others
+          MLFLOW_TRACKING_URI: ${{ env.MLFLOW_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
+          DATASET_PATH: ${{ github.event.inputs.dataset_path || 'balanced_vad_dataset.csv' }}
+          MODEL_OUT_DIR: ${{ env.MODEL_OUT_DIR }}
+        run: python train.py
+
+      - name: Upload Model Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-zcr-others
+          path: |
+            models/model_zcr_others.pkl
+            models/scaler_zcr_others.pkl
+            models/meta_zcr_others.json
+          retention-days: 30
+
+      - name: Upload MLflow tracking DB
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-db-zcr-others-${{ github.run_number }}
+          path: /tmp/mlflow/
+          retention-days: 7
+        continue-on-error: true
+
+      - name: Training Summary
+        run: |
+          echo "## Training Summary (ZCR Others)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f models/meta_zcr_others.json ]; then
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            python -m json.tool models/meta_zcr_others.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Training failed - no metadata found" >> $GITHUB_STEP_SUMMARY
+          fi

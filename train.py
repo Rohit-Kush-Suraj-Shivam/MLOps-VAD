@@ -37,7 +37,7 @@ warnings.filterwarnings("ignore")
 # Configuration
 FEATURE_SET = os.getenv("FEATURE_SET", "combined")  # combined | mfcc_only | zcr_others
 DATASET_PATH = os.getenv("DATASET_PATH", "balanced_vad_dataset.csv")
-MLFLOW_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+MLFLOW_URI = os.getenv("MLFLOW_TRACKING_URI", "file:///tmp/mlflow")
 MODEL_OUT_DIR = os.getenv("MODEL_OUT_DIR", "models")
 RANDOM_STATE = 42
 CV_FOLDS = 5

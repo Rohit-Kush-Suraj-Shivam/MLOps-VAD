@@ -23,7 +23,7 @@ from pathlib import Path
 # Configuration
 MODELS_DIR = os.getenv("MODEL_OUT_DIR", "models")
 ACTIVE_DIR = os.path.join(MODELS_DIR, "active")
-MLFLOW_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+MLFLOW_URI = os.getenv("MLFLOW_TRACKING_URI", "file:///tmp/mlflow")
 EXPERIMENT_NAME = "VAD-ModelSelection"
 
 # Ensure directories exist
@@ -219,7 +219,7 @@ def main():
             {
                 "rank": rank,
                 "branch": b,
-                "f1": f,
+                "f1": f1,
                 "model_type": m["model_type"],
                 "accuracy": m["metrics"].get("accuracy"),
                 "roc_auc": m["metrics"].get("roc_auc")
