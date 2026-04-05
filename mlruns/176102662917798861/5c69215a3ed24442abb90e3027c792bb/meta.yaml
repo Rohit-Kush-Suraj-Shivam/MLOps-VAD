@@ -1,0 +1,15 @@
+artifact_uri: file:///app/mlruns/176102662917798861/5c69215a3ed24442abb90e3027c792bb/artifacts
+end_time: 1775419413302
+entry_point_name: ''
+experiment_id: '176102662917798861'
+lifecycle_stage: active
+run_id: 5c69215a3ed24442abb90e3027c792bb
+run_name: merciful-jay-133
+run_uuid: 5c69215a3ed24442abb90e3027c792bb
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1775419411268
+status: 3
+tags: []
+user_id: root
