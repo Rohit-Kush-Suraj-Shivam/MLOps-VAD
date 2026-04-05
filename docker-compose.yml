@@ -1,63 +1,21 @@
+version: "3.9"
+
 services:
 
-  # ── FastAPI inference server ───────────────────────────────────────────
-  vad-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: vad_api
+  trainer:
+    build: .
+    container_name: vad-trainer
+    command: sh -c "while true; do python mlflow_pipeline/train_branches.py; echo 'Retraining in 60s...'; sleep 60; done"
+    volumes:
+      - .:/app
+
+  api:
+    build: .
+    container_name: vad-api
+    depends_on:
+      - trainer
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
     volumes:
-      - ./models:/app/models          # shared model store (host dir -> container)
-    environment:
-      MODEL_POLL_SEC: "30"
-    restart: unless-stopped
-    depends_on:
-      vad-trainer:
-        condition: service_started
-
-  # ── MLflow tracking UI ────────────────────────────────────────────────
-  mlflow-ui:
-    image: python:3.11-slim
-    container_name: mlflow_ui
-    ports:
-      - "5000:5000"
-    volumes:
-      - mlflow_data:/mlflow
-    command: >
-      sh -c "pip install mlflow --quiet &&
-             mlflow server
-               --backend-store-uri sqlite:////mlflow/mlflow.db
-               --default-artifact-root /mlflow/mlruns
-               --host 0.0.0.0
-               --port 5000"
-    restart: unless-stopped
-
-  # ── Scheduled retrainer ───────────────────────────────────────────────
-  vad-trainer:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: vad_trainer
-    volumes:
-      - ./models:/app/models
-      - ./balanced_vad_dataset.csv:/app/balanced_vad_dataset.csv
-      - mlflow_data:/mlflow
-    environment:
-      RETRAIN_EVERY_HOURS: "6"
-      MLFLOW_TRACKING_URI: "sqlite:////mlflow/mlflow.db"
-    entrypoint: >
-      sh -c "
-        while true; do
-          echo '[Trainer] Starting pipeline...';
-          python -m mlflow_pipeline.train_branches;
-          echo '[Trainer] Done. Sleeping $$RETRAIN_EVERY_HOURS h...';
-          sleep $$(( RETRAIN_EVERY_HOURS * 3600 ));
-        done
-      "
-    restart: unless-stopped
-
-# ── Named volume for MLflow (avoids file-vs-directory mount issues) ───────
-volumes:
-  mlflow_data:
+      - .:/app
