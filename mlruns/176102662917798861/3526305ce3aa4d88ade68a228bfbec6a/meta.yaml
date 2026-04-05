@@ -1,0 +1,15 @@
+artifact_uri: file:///app/mlruns/176102662917798861/3526305ce3aa4d88ade68a228bfbec6a/artifacts
+end_time: 1775419093934
+entry_point_name: ''
+experiment_id: '176102662917798861'
+lifecycle_stage: active
+run_id: 3526305ce3aa4d88ade68a228bfbec6a
+run_name: dazzling-mole-925
+run_uuid: 3526305ce3aa4d88ade68a228bfbec6a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1775419092082
+status: 3
+tags: []
+user_id: root
