@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# MLflow
+mlflow.db
+mlruns/
+mlflow-artifacts/
+
+# Models (generated - not committed to git; use GitHub Actions artifacts instead)
+models/active/
+models/*.pkl
+models/*.json
+# Exception: keep the models/ directory itself
+!models/.gitkeep
+
+# Dataset (large files - use Git LFS or download separately)
+*.csv
+SpeechDataset/
+mic_dataset/
+balanced_audio_dataset.csv
+
+# Audio temp files
+temp.wav
+*.mp4
+*.mp3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Logs
+*.log
+logs/

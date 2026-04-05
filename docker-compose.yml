@@ -1,0 +1,75 @@
+version: "3.9"
+
+services:
+  # ── MLflow tracking server ──────────────────────────────────────────────────
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.13.0
+    container_name: vad-mlflow
+    command: >
+      mlflow server
+        --host 0.0.0.0
+        --port 5000
+        --backend-store-uri sqlite:////mlflow/mlflow.db
+        --default-artifact-root /mlflow/artifacts
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── VAD API ─────────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vad-api
+    ports:
+      - "8000:8000"
+    environment:
+      - ACTIVE_MODEL_DIR=/app/models/active
+      - MODEL_OUT_DIR=/app/models
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    volumes:
+      - ./models:/app/models          # live model updates without rebuild
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Training runner (one-shot, exits after training) ────────────────────────
+  # Run with: docker compose run --rm trainer
+  trainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vad-trainer
+    entrypoint: []
+    command: >
+      sh -c "
+        echo 'Training all 3 feature sets…' &&
+        FEATURE_SET=combined       python train.py &&
+        FEATURE_SET=mfcc_only      python train.py &&
+        FEATURE_SET=zcr_others     python train.py &&
+        python model_selector.py &&
+        echo 'Done!'
+      "
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - DATASET_PATH=/app/balanced_vad_dataset.csv
+      - MODEL_OUT_DIR=/app/models
+    volumes:
+      - ./models:/app/models
+      - ./balanced_vad_dataset.csv:/app/balanced_vad_dataset.csv:ro
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    profiles:
+      - train
+
+volumes:
+  mlflow-data:
