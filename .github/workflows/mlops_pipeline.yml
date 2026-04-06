@@ -5,7 +5,12 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
+
   api-test:
     runs-on: ubuntu-latest
 
@@ -21,13 +26,75 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # ✅ Ensure model exists
+      # Ensure model exists (CI safety)
       - name: Create dummy model
         run: |
           mkdir -p models/active
           python -c "import joblib; from sklearn.ensemble import RandomForestClassifier; m=RandomForestClassifier(); m.n_features_in_=10; joblib.dump(m, 'models/active/model.pkl')"
 
-      # 🚨 DEBUG MODE — RUN UVICORN IN FOREGROUND
-      - name: Start API (DEBUG MODE)
+      # Start API (background)
+      - name: Start API
         run: |
-          python -m uvicorn api.main:app --host 127.0.0.1 --port 8000
+          nohup python -m uvicorn api.main:app --host 127.0.0.1 --port 8000 > server.log 2>&1 &
+          sleep 5
+
+      # Wait until API is ready
+      - name: Wait for API
+        run: |
+          for i in {1..20}; do
+            if curl -s http://127.0.0.1:8000/health; then
+              echo "API is ready"
+              exit 0
+            fi
+            echo "Waiting..."
+            sleep 2
+          done
+          echo "API failed to start"
+          cat server.log || true
+          exit 1
+
+      # Test endpoint
+      - name: Test API
+        run: curl http://127.0.0.1:8000
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: api-test
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build image
+        run: docker build -t ghcr.io/$OWNER_LC/vad-app:latest .
+
+      - name: Push image
+        run: docker push ghcr.io/$OWNER_LC/vad-app:latest
+
+  build-exe:
+    runs-on: windows-latest
+    needs: api-test
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - run: pip install -r requirements.txt
+      - run: pip install pyinstaller
+
+      - name: Build EXE
+        run: pyinstaller vad_app.spec --clean
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: exe
+          path: dist/
