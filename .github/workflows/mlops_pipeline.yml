@@ -21,19 +21,23 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # ✅ Create dummy model (FIXED SYNTAX)
+      # ✅ Fix PYTHONPATH (CRITICAL)
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
+
+      # ✅ Create dummy model
       - name: Create dummy model
         run: |
           mkdir -p models/active
           python -c "import joblib; from sklearn.ensemble import RandomForestClassifier; m=RandomForestClassifier(); m.n_features_in_=10; joblib.dump(m, 'models/active/model.pkl')"
 
-      # ✅ Start API
+      # ✅ Start API (FIXED IMPORT)
       - name: Start API
         run: |
-          nohup uvicorn api.main:app --host 127.0.0.1 --port 8080 > server.log 2>&1 &
+          nohup python -m uvicorn api.main:app --host 127.0.0.1 --port 8080 > server.log 2>&1 &
           sleep 5
 
-      # ✅ Show logs
+      # ✅ Show logs (THIS WILL SHOW REAL ERROR)
       - name: Show logs
         run: cat server.log || true
 
@@ -51,6 +55,5 @@ jobs:
           echo "API failed"
           exit 1
 
-      # ✅ Final test
       - name: Test API
         run: curl http://127.0.0.1:8080
