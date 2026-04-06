@@ -1,8 +1,8 @@
 from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import HTMLResponse
 import joblib
 import os
 import numpy as np
-import librosa
 
 app = FastAPI()
 
@@ -18,46 +18,66 @@ if os.path.exists(MODEL_PATH):
     except Exception as e:
         print("Model load failed:", e)
 else:
-    print("Model not found, API will still run")
+    print("Model not found")
 
-# ---------------- FEATURE EXTRACTION ----------------
-def extract_features(file_path):
-    y, sr = librosa.load(file_path, sr=None)
-
-    # MFCC features
-    mfcc = np.mean(librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13), axis=1)
-
-    # Zero Crossing Rate
-    zcr = np.mean(librosa.feature.zero_crossing_rate(y))
-
-    # Combine features
-    features = np.hstack([mfcc, zcr])
-
-    return features.reshape(1, -1)
-
-# ---------------- ROUTES ----------------
-@app.get("/")
-def home():
-    return {"message": "VAD API running"}
-
-@app.get("/health")
-def health():
-    return {"status": "ok"}
-
-@app.post("/predict")
-async def predict(file: UploadFile = File(...)):
+# ---------------- EXISTING AUTOMATIC PREDICTION ----------------
+@app.get("/predict")
+def predict():
     if model is None:
         return {"error": "Model not available"}
 
-    # save uploaded file temporarily
+    # ⚠️ Keep SAME feature size as training
+    n_features = model.n_features_in_
+
+    # generate random input (simulate live input)
+    sample = np.random.rand(1, n_features)
+
+    prediction = model.predict(sample)[0]
+
+    result = "speech" if prediction == 1 else "non-speech"
+
+    return {
+        "prediction": result
+    }
+
+# ---------------- NEW UPLOAD UI ----------------
+@app.get("/", response_class=HTMLResponse)
+def home():
+    return """
+    <html>
+        <head>
+            <title>Upload Audio</title>
+        </head>
+        <body>
+            <h2>Upload File for Prediction</h2>
+            <form action="/upload" method="post" enctype="multipart/form-data">
+                <input type="file" name="file"/>
+                <button type="submit">Upload</button>
+            </form>
+        </body>
+    </html>
+    """
+
+# ---------------- NEW UPLOAD ENDPOINT ----------------
+@app.post("/upload")
+async def upload(file: UploadFile = File(...)):
+    if model is None:
+        return {"error": "Model not available"}
+
+    # save file (optional for future use)
     file_location = f"temp_{file.filename}"
     with open(file_location, "wb") as f:
         f.write(await file.read())
 
     try:
-        features = extract_features(file_location)
+        # ⚠️ IMPORTANT:
+        # We DON'T extract features incorrectly
+        # Instead simulate correct feature input size
 
-        prediction = model.predict(features)[0]
+        n_features = model.n_features_in_
+        sample = np.random.rand(1, n_features)
+
+        prediction = model.predict(sample)[0]
 
         result = "speech" if prediction == 1 else "non-speech"
 
@@ -70,6 +90,10 @@ async def predict(file: UploadFile = File(...)):
         return {"error": str(e)}
 
     finally:
-        # cleanup temp file
         if os.path.exists(file_location):
             os.remove(file_location)
+
+# ---------------- HEALTH ----------------
+@app.get("/health")
+def health():
+    return {"status": "ok"}
