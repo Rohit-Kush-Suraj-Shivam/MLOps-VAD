@@ -6,42 +6,38 @@ on:
   workflow_dispatch:
 
 jobs:
-
   api-test:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
-      - run: pip install -r requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-      # ✅ ensure model exists
+      # ✅ Create dummy model (FIXED SYNTAX)
       - name: Create dummy model
         run: |
           mkdir -p models/active
-          python - <<EOF
-import joblib
-from sklearn.ensemble import RandomForestClassifier
-model = RandomForestClassifier()
-model.n_features_in_ = 10
-joblib.dump(model, "models/active/model.pkl")
-EOF
+          python -c "import joblib; from sklearn.ensemble import RandomForestClassifier; m=RandomForestClassifier(); m.n_features_in_=10; joblib.dump(m, 'models/active/model.pkl')"
 
-      # ✅ start API
+      # ✅ Start API
       - name: Start API
         run: |
           nohup uvicorn api.main:app --host 127.0.0.1 --port 8080 > server.log 2>&1 &
           sleep 5
 
-      # ✅ show logs
-      - name: Debug logs
+      # ✅ Show logs
+      - name: Show logs
         run: cat server.log || true
 
-      # ✅ wait properly
+      # ✅ Wait for API
       - name: Wait for API
         run: |
           for i in {1..20}; do
@@ -52,8 +48,9 @@ EOF
             echo "Waiting..."
             sleep 2
           done
-          echo "API failed to start"
+          echo "API failed"
           exit 1
 
+      # ✅ Final test
       - name: Test API
         run: curl http://127.0.0.1:8080
