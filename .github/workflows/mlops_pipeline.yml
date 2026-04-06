@@ -21,39 +21,13 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # ✅ Fix PYTHONPATH (CRITICAL)
-      - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
-
-      # ✅ Create dummy model
+      # ✅ Ensure model exists
       - name: Create dummy model
         run: |
           mkdir -p models/active
           python -c "import joblib; from sklearn.ensemble import RandomForestClassifier; m=RandomForestClassifier(); m.n_features_in_=10; joblib.dump(m, 'models/active/model.pkl')"
 
-      # ✅ Start API (FIXED IMPORT)
-      - name: Start API
+      # 🚨 DEBUG MODE — RUN UVICORN IN FOREGROUND
+      - name: Start API (DEBUG MODE)
         run: |
-          nohup python -m uvicorn api.main:app --host 127.0.0.1 --port 8000 > server.log 2>&1 &
-          sleep 5
-
-      # ✅ Show logs (THIS WILL SHOW REAL ERROR)
-      - name: Show logs
-        run: cat server.log || true
-
-      # ✅ Wait for API
-      - name: Wait for API
-        run: |
-          for i in {1..20}; do
-            if curl -s http://127.0.0.1:8000/health; then
-              echo "API is ready"
-              exit 0
-            fi
-            echo "Waiting..."
-            sleep 2
-          done
-          echo "API failed"
-          exit 1
-
-      - name: Test API
-        run: curl http://127.0.0.1:8000
+          python -m uvicorn api.main:app --host 127.0.0.1 --port 8000
