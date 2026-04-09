@@ -33,9 +33,9 @@ jobs:
       # ── Verify models were created ──
       - name: Verify active model exists
         run: |
-          test -f models/active/model.pkl  && echo "✅ model.pkl exists"
-          test -f models/active/scaler.pkl && echo "✅ scaler.pkl exists"
-          test -f models/active/meta.json  && echo "✅ meta.json exists"
+          test -f models/active/model.pkl  && echo " model.pkl exists"
+          test -f models/active/scaler.pkl && echo " scaler.pkl exists"
+          test -f models/active/meta.json  && echo " meta.json exists"
           python -c "
           import json
           with open('models/active/meta.json') as f:
@@ -43,7 +43,7 @@ jobs:
           print(f'Active branch: {meta[\"active_branch\"]}')
           print(f'F1 score: {meta[\"metrics\"][\"f1\"]:.4f}')
           assert meta['metrics']['f1'] > 0.5, 'F1 too low'
-          print('✅ Model quality check passed')
+          print(' Model quality check passed')
           "
 
       # ── Start API (background) ──
@@ -58,13 +58,13 @@ jobs:
           for i in $(seq 1 20); do
             if curl -sf http://127.0.0.1:8000/health; then
               echo ""
-              echo "✅ API is ready"
+              echo " API is ready"
               exit 0
             fi
             echo "Waiting... ($i)"
             sleep 2
           done
-          echo "❌ API failed to start"
+          echo " API failed to start"
           cat server.log || true
           exit 1
 
@@ -78,7 +78,7 @@ jobs:
           data = json.load(sys.stdin)
           assert data['model_loaded'] == True, 'Model not loaded'
           assert data['scaler_loaded'] == True, 'Scaler not loaded'
-          print('✅ Health check passed')
+          print(' Health check passed')
           "
 
       - name: Test predict endpoint
@@ -89,7 +89,7 @@ jobs:
           import sys, json
           data = json.load(sys.stdin)
           assert data['prediction'] in ['speech', 'non-speech'], f'Bad prediction: {data}'
-          print('✅ Predict endpoint works')
+          print(' Predict endpoint works')
           "
 
       - name: Test upload with sample audio
@@ -106,7 +106,7 @@ jobs:
               wf.setsampwidth(2)
               wf.setframerate(sr)
               wf.writeframes(audio.tobytes())
-          print('✅ Test WAV created')
+          print(' Test WAV created')
           "
           response=$(curl -sf -X POST http://127.0.0.1:8000/upload \
             -F "file=@test_ci.wav")
@@ -116,7 +116,7 @@ jobs:
           data = json.load(sys.stdin)
           assert 'prediction' in data, f'No prediction in response: {data}'
           assert data['prediction'] in ['speech', 'non-speech']
-          print('✅ Upload + predict works')
+          print(' Upload + predict works')
           "
 
       - name: Upload server log on failure

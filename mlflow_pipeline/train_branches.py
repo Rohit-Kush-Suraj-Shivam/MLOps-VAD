@@ -2,7 +2,7 @@
 MLflow Training Pipeline — VAD (Voice Activity Detection)
 Trains 3 model branches, logs metrics, selects best model, promotes to active.
 
-Run from the repo root:  python train_branches.py
+
 """
 
 import os, json, shutil, warnings
@@ -165,7 +165,7 @@ def promote_best(results):
     with open(ACTIVE_DIR / "meta.json", "w") as f:
         json.dump(best, f, indent=2)
 
-    print(f"\n✅  Best model: [{branch}] promoted to active "
+    print(f"\n  Best model: [{branch}] promoted to active "
           f"(F1={best['metrics']['f1']:.4f})")
     return best
 
@@ -181,7 +181,7 @@ def run_pipeline():
         print(f"\nTraining branch: {branch}")
         results.append(train_branch(branch, df))
     best = promote_best(results)
-    print("\n📊  All branch results:")
+    print("\n  All branch results:")
     for r in best["all_results"]:
         marker = "★" if r["branch"] == best["active_branch"] else " "
         print(f"  {marker} #{r['rank']} {r['branch']:<12}  "

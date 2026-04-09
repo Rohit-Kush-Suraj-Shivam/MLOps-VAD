@@ -25,5 +25,5 @@ jobs:
 
       - name: Verify outputs
         run: |
-          test -f models/active/model.pkl  && echo "✅ model exists"
-          test -f models/active/scaler.pkl && echo "✅ scaler exists"
+          test -f models/active/model.pkl  && echo " model exists"
+          test -f models/active/scaler.pkl && echo " scaler exists"
