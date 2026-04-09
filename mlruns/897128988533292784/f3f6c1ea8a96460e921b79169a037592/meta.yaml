@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/rohit/OneDrive/Documents/GitHub/MLOps-VAD/mlruns/897128988533292784/f3f6c1ea8a96460e921b79169a037592/artifacts
+end_time: 1775750458288
+entry_point_name: ''
+experiment_id: '897128988533292784'
+lifecycle_stage: active
+run_id: f3f6c1ea8a96460e921b79169a037592
+run_name: predict-noise_7.wav
+run_uuid: f3f6c1ea8a96460e921b79169a037592
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1775750458186
+status: 3
+tags: []
+user_id: rohit

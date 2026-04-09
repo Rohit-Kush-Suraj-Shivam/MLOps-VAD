@@ -1,38 +1,41 @@
 services:
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:latest
+    image: ghcr.io/mlflow/mlflow:v2.16.2
     container_name: mlflow-server
-    command: mlflow ui --host 0.0.0.0 --port 5000
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:///mlflow/mlflow.db
+      --default-artifact-root /mlflow/artifacts
     ports:
       - "5001:5000"
     volumes:
-      - mlflow_data:/mlruns
+      - mlflow_data:/mlflow
 
   trainer:
     build: .
     container_name: vad-trainer
-    command: sh -c "while true; do python mlflow_pipeline/train_branches.py; echo 'Retraining...'; sleep 60; done"
+    command: sh -c "sleep 5 && python mlflow_pipeline/train_branches.py"
     volumes:
       - .:/app
-      - mlflow_data:/mlruns
-    env_file:
-      - .env
+    depends_on:
+      - mlflow
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
 
   api:
     build: .
     container_name: vad-api
-    depends_on:
-      - trainer
-      - mlflow
-    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+    command: sh -c "sleep 30 && uvicorn api.main:app --host 0.0.0.0 --port 8000"
     ports:
       - "8080:8000"
     volumes:
       - .:/app
-      - mlflow_data:/mlruns
+    depends_on:
+      - mlflow
+      - trainer
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
 

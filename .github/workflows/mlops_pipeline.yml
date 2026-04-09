@@ -11,58 +11,127 @@ permissions:
 
 jobs:
 
-  api-test:
+  train-and-test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # Ensure model exists (CI safety)
-      - name: Create dummy model
-        run: |
-          mkdir -p models/active
-          python -c "import joblib; from sklearn.ensemble import RandomForestClassifier; m=RandomForestClassifier(); m.n_features_in_=10; joblib.dump(m, 'models/active/model.pkl')"
+      # ── Train all 3 branches with MLflow ──
+      - name: Run training pipeline
+        run: python train_branches.py
 
-      # Start API (background)
+      # ── Verify models were created ──
+      - name: Verify active model exists
+        run: |
+          test -f models/active/model.pkl  && echo "✅ model.pkl exists"
+          test -f models/active/scaler.pkl && echo "✅ scaler.pkl exists"
+          test -f models/active/meta.json  && echo "✅ meta.json exists"
+          python -c "
+          import json
+          with open('models/active/meta.json') as f:
+              meta = json.load(f)
+          print(f'Active branch: {meta[\"active_branch\"]}')
+          print(f'F1 score: {meta[\"metrics\"][\"f1\"]:.4f}')
+          assert meta['metrics']['f1'] > 0.5, 'F1 too low'
+          print('✅ Model quality check passed')
+          "
+
+      # ── Start API (background) ──
       - name: Start API
         run: |
           nohup python -m uvicorn api.main:app --host 127.0.0.1 --port 8000 > server.log 2>&1 &
-          sleep 5
+          sleep 8
 
-      # Wait until API is ready
+      # ── Wait until API is ready ──
       - name: Wait for API
         run: |
-          for i in {1..20}; do
-            if curl -s http://127.0.0.1:8000/health; then
-              echo "API is ready"
+          for i in $(seq 1 20); do
+            if curl -sf http://127.0.0.1:8000/health; then
+              echo ""
+              echo "✅ API is ready"
               exit 0
             fi
-            echo "Waiting..."
+            echo "Waiting... ($i)"
             sleep 2
           done
-          echo "API failed to start"
+          echo "❌ API failed to start"
           cat server.log || true
           exit 1
 
-      # Test endpoint
-      - name: Test API
-        run: curl http://127.0.0.1:8000
+      # ── Test endpoints ──
+      - name: Test health endpoint
+        run: |
+          response=$(curl -sf http://127.0.0.1:8000/health)
+          echo "$response"
+          echo "$response" | python -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          assert data['model_loaded'] == True, 'Model not loaded'
+          assert data['scaler_loaded'] == True, 'Scaler not loaded'
+          print('✅ Health check passed')
+          "
+
+      - name: Test predict endpoint
+        run: |
+          response=$(curl -sf http://127.0.0.1:8000/predict)
+          echo "$response"
+          echo "$response" | python -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          assert data['prediction'] in ['speech', 'non-speech'], f'Bad prediction: {data}'
+          print('✅ Predict endpoint works')
+          "
+
+      - name: Test upload with sample audio
+        run: |
+          # Create a small synthetic WAV for testing
+          python -c "
+          import numpy as np, struct, wave
+          sr = 22050
+          duration = 1.0
+          t = np.linspace(0, duration, int(sr * duration), endpoint=False)
+          audio = (np.sin(2 * np.pi * 440 * t) * 32767).astype(np.int16)
+          with wave.open('test_ci.wav', 'w') as wf:
+              wf.setnchannels(1)
+              wf.setsampwidth(2)
+              wf.setframerate(sr)
+              wf.writeframes(audio.tobytes())
+          print('✅ Test WAV created')
+          "
+          response=$(curl -sf -X POST http://127.0.0.1:8000/upload \
+            -F "file=@test_ci.wav")
+          echo "$response"
+          echo "$response" | python -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          assert 'prediction' in data, f'No prediction in response: {data}'
+          assert data['prediction'] in ['speech', 'non-speech']
+          print('✅ Upload + predict works')
+          "
+
+      - name: Upload server log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-log
+          path: server.log
 
   docker:
     runs-on: ubuntu-latest
-    needs: api-test
+    needs: train-and-test
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
@@ -75,26 +144,3 @@ jobs:
 
       - name: Push image
         run: docker push ghcr.io/$OWNER_LC/vad-app:latest
-
-  build-exe:
-    runs-on: windows-latest
-    needs: api-test
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-
-      - run: pip install -r requirements.txt
-      - run: pip install pyinstaller
-
-      - name: Build EXE
-        run: pyinstaller vad_app.spec --clean
-
-      - name: Upload EXE
-        uses: actions/upload-artifact@v4
-        with:
-          name: exe
-          path: dist/

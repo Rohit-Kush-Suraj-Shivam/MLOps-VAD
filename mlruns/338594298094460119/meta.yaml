@@ -1,0 +1,6 @@
+artifact_location: file:///C:/Users/rohit/OneDrive/Documents/GitHub/MLOps-VAD/mlruns/338594298094460119
+creation_time: 1775749190725
+experiment_id: '338594298094460119'
+last_update_time: 1775749190725
+lifecycle_stage: active
+name: VAD-mfcc_only

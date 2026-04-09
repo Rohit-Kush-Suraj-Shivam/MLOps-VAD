@@ -10,15 +10,20 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
       - name: Install Dependencies
         run: pip install -r requirements.txt
 
-      - name: Run Training Script
-        run: python train_models.py
+      - name: Run Training Pipeline
+        run: python train_branches.py
+
+      - name: Verify outputs
+        run: |
+          test -f models/active/model.pkl  && echo "✅ model exists"
+          test -f models/active/scaler.pkl && echo "✅ scaler exists"

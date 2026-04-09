@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/rohit/OneDrive/Documents/GitHub/MLOps-VAD/mlruns/338594298094460119/7bff4665acff4983b7c3d4c9b0450d25/artifacts
+end_time: 1775749191335
+entry_point_name: ''
+experiment_id: '338594298094460119'
+lifecycle_stage: active
+run_id: 7bff4665acff4983b7c3d4c9b0450d25
+run_name: mfcc_only
+run_uuid: 7bff4665acff4983b7c3d4c9b0450d25
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1775749191311
+status: 3
+tags: []
+user_id: rohit

@@ -22,7 +22,7 @@ from sklearn.metrics import (
     f1_score, roc_auc_score, confusion_matrix
 )
 
-ROOT         = Path(__file__).resolve().parent.parent
+ROOT         = Path.cwd()
 DATA_CSV     = ROOT / "balanced_vad_dataset.csv"
 MODELS_DIR   = ROOT / "models"
 ACTIVE_DIR   = MODELS_DIR / "active"
@@ -45,7 +45,7 @@ def setup_mlflow():
     if env_uri:
         db_uri = env_uri
     else:
-        db_uri = f"sqlite:///{MLFLOW_DB}"
+        db_uri = "./mlruns"
         if MLFLOW_DB.exists():
             try:
                 mlflow.set_tracking_uri(db_uri)

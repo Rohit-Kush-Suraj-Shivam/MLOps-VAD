@@ -23,22 +23,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy installed packages
 COPY --from=builder /install /usr/local
 
-# Copy application
-COPY api/           ./api/
+# Copy application code
+COPY api/             ./api/
 COPY mlflow_pipeline/ ./mlflow_pipeline/
-COPY models/        ./models/
-COPY model.pkl      ./model.pkl
-COPY scaler.pkl     ./scaler.pkl
+COPY models/          ./models/
+COPY model.pkl        ./model.pkl
+COPY scaler.pkl       ./scaler.pkl
 COPY balanced_vad_dataset.csv ./balanced_vad_dataset.csv
 
-# Ensure __init__.py in mlflow_pipeline
-RUN touch mlflow_pipeline/__init__.py
+# Ensure __init__.py files exist
+RUN touch mlflow_pipeline/__init__.py api/__init__.py
 
 # Environment
-ENV MODEL_POLL_SEC=60
 ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-# Entrypoint: optionally retrain first, then serve
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

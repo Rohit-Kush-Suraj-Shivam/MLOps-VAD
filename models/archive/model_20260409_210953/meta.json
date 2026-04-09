@@ -1,0 +1,164 @@
+{
+  "feature_set": "combined",
+  "feature_names": [
+    "mfcc_1",
+    "mfcc_2",
+    "mfcc_3",
+    "mfcc_4",
+    "mfcc_5",
+    "mfcc_6",
+    "mfcc_7",
+    "mfcc_8",
+    "mfcc_9",
+    "mfcc_10",
+    "mfcc_11",
+    "mfcc_12",
+    "mfcc_13",
+    "energy",
+    "zcr",
+    "spectral_centroid"
+  ],
+  "model_type": "SVC",
+  "metrics": {
+    "accuracy": 0.8994974874371859,
+    "precision": 0.8807339449541285,
+    "recall": 0.9320388349514563,
+    "f1": 0.9056603773584906,
+    "roc_auc": 0.9557797330097086
+  },
+  "cv_f1_mean": 0.9043361183854481,
+  "cv_f1_std": 0.011734758425859278,
+  "confusion_matrix": {
+    "confusion_matrix": [
+      [
+        166,
+        26
+      ],
+      [
+        14,
+        192
+      ]
+    ],
+    "true_negatives": 166,
+    "false_positives": 26,
+    "false_negatives": 14,
+    "true_positives": 192
+  },
+  "train_samples": 1592,
+  "test_samples": 398,
+  "timestamp": "2026-04-06T02:54:12.046019",
+  "mlflow_run_id": "00544add0b274d01b3847dbcb33e7642",
+  "mlflow_experiment": "VAD-combined",
+  "active_branch": "combined",
+  "archive_location": "models/archive/model_20260406_025412",
+  "selection_timestamp": "2026-04-06T02:54:12.232545",
+  "all_results": [
+    {
+      "rank": 1,
+      "branch": "combined",
+      "f1": 0.9056603773584906,
+      "model_type": "SVC",
+      "accuracy": 0.8994974874371859,
+      "roc_auc": 0.9557797330097086
+    },
+    {
+      "rank": 2,
+      "branch": "mfcc_only",
+      "f1": 0.8978622327790974,
+      "model_type": "SVC",
+      "accuracy": 0.8919597989949749,
+      "roc_auc": 0.9519366909385114
+    },
+    {
+      "rank": 3,
+      "branch": "zcr_others",
+      "f1": 0.7242798353909465,
+      "model_type": "SVC",
+      "accuracy": 0.6633165829145728,
+      "roc_auc": 0.7366252022653722
+    }
+  ],
+  "comparison_report": {
+    "timestamp": "2026-04-06T02:54:12.232565",
+    "total_models_evaluated": 3,
+    "models": [
+      {
+        "rank": 1,
+        "branch": "combined",
+        "model_type": "SVC",
+        "feature_set": "combined",
+        "metrics": {
+          "accuracy": 0.8994974874371859,
+          "precision": 0.8807339449541285,
+          "recall": 0.9320388349514563,
+          "f1": 0.9056603773584906,
+          "roc_auc": 0.9557797330097086
+        },
+        "feature_names": [
+          "mfcc_1",
+          "mfcc_2",
+          "mfcc_3",
+          "mfcc_4",
+          "mfcc_5",
+          "mfcc_6",
+          "mfcc_7",
+          "mfcc_8",
+          "mfcc_9",
+          "mfcc_10",
+          "mfcc_11",
+          "mfcc_12",
+          "mfcc_13",
+          "energy",
+          "zcr",
+          "spectral_centroid"
+        ]
+      },
+      {
+        "rank": 2,
+        "branch": "mfcc_only",
+        "model_type": "SVC",
+        "feature_set": "mfcc_only",
+        "metrics": {
+          "accuracy": 0.8919597989949749,
+          "precision": 0.8790697674418605,
+          "recall": 0.9174757281553398,
+          "f1": 0.8978622327790974,
+          "roc_auc": 0.9519366909385114
+        },
+        "feature_names": [
+          "mfcc_1",
+          "mfcc_2",
+          "mfcc_3",
+          "mfcc_4",
+          "mfcc_5",
+          "mfcc_6",
+          "mfcc_7",
+          "mfcc_8",
+          "mfcc_9",
+          "mfcc_10",
+          "mfcc_11",
+          "mfcc_12",
+          "mfcc_13"
+        ]
+      },
+      {
+        "rank": 3,
+        "branch": "zcr_others",
+        "model_type": "SVC",
+        "feature_set": "zcr_others",
+        "metrics": {
+          "accuracy": 0.6633165829145728,
+          "precision": 0.6285714285714286,
+          "recall": 0.8543689320388349,
+          "f1": 0.7242798353909465,
+          "roc_auc": 0.7366252022653722
+        },
+        "feature_names": [
+          "energy",
+          "zcr",
+          "spectral_centroid"
+        ]
+      }
+    ]
+  }
+}

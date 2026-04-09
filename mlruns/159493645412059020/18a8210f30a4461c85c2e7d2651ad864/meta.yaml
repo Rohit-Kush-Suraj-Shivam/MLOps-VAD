@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/rohit/OneDrive/Documents/GitHub/MLOps-VAD/mlruns/159493645412059020/18a8210f30a4461c85c2e7d2651ad864/artifacts
+end_time: 1775749192346
+entry_point_name: ''
+experiment_id: '159493645412059020'
+lifecycle_stage: active
+run_id: 18a8210f30a4461c85c2e7d2651ad864
+run_name: zcr_others
+run_uuid: 18a8210f30a4461c85c2e7d2651ad864
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1775749192324
+status: 3
+tags: []
+user_id: rohit
