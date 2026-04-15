@@ -46,12 +46,12 @@
   },
   "train_samples": 1592,
   "test_samples": 398,
-  "timestamp": "2026-04-10T04:22:47.060558",
-  "mlflow_run_id": "669f59e968be4da8aca62da39b0457ec",
+  "timestamp": "2026-04-10T04:17:20.554207",
+  "mlflow_run_id": "345bb1c36ebb4879a8560c92dcfdd452",
   "mlflow_experiment": "VAD-combined",
   "active_branch": "combined",
-  "archive_location": "models/archive/model_20260410_042247",
-  "selection_timestamp": "2026-04-10T04:22:48.199250",
+  "archive_location": "models/archive/model_20260410_041720",
+  "selection_timestamp": "2026-04-10T04:17:21.503348",
   "all_results": [
     {
       "rank": 1,
@@ -79,7 +79,7 @@
     }
   ],
   "comparison_report": {
-    "timestamp": "2026-04-10T04:22:48.199296",
+    "timestamp": "2026-04-10T04:17:21.503373",
     "total_models_evaluated": 3,
     "models": [
       {
